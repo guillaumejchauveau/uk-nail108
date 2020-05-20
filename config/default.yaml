@@ -1,1 +1,2 @@
-world_name: /usr/share/gazebo-9/worlds/robocup14_spl_field.world
+topic: /scan
+topic_queue_size: 10

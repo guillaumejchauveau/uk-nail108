@@ -73,7 +73,6 @@ include_directories(
 ## Declare cpp executables
 add_executable(${PROJECT_NAME}
   src/${PROJECT_NAME}_node.cpp
-  src/RosPackageTemplate.cpp
 )
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 

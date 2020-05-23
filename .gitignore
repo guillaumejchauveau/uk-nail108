@@ -53,3 +53,4 @@ qtcreator-*
 CATKIN_IGNORE
 
 !*.launch
+/husky_navigation.bag

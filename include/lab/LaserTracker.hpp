@@ -6,6 +6,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <cmath>
+#include <std_srvs/SetBool.h>
 
 namespace lab {
 
@@ -15,6 +16,8 @@ protected:
   ros::Subscriber laserSubscriber_;
   ros::Publisher cmdVelPublisher_;
   ros::Publisher vizPublisher_;
+  bool started_;
+  ros::ServiceServer startStopService_;
 
   void laserScanCallback(const sensor_msgs::LaserScanConstPtr &msg) {
     size_t target_start = 0;
@@ -46,12 +49,14 @@ protected:
       (target_stop + target_start) / 2 * msg->angle_increment + msg->angle_min;
     auto target_center_angle_abs = fabs(target_center_angle);
 
-    geometry_msgs::Twist twist;
-    if (target_center_angle_abs < 0.2) {
-      twist.linear.x = 0.7;
+    if (this->started_) {
+      geometry_msgs::Twist twist;
+      if (target_center_angle_abs < 0.2) {
+        twist.linear.x = 0.7;
+      }
+      twist.angular.z = -target_center_angle;
+      this->cmdVelPublisher_.publish(twist);
     }
-    twist.angular.z = -target_center_angle;
-    this->cmdVelPublisher_.publish(twist);
 
     auto target_relative_x = target_min_range * cosf(target_center_angle);
     auto target_relative_y = target_min_range * sinf(target_center_angle);
@@ -74,9 +79,22 @@ protected:
     this->vizPublisher_.publish(target_marker);
   }
 
+  bool startStopServiceCallback(std_srvs::SetBool::Request &request,
+                                std_srvs::SetBool::Response &response) {
+    if (request.data) {
+      this->start();
+    } else {
+      this->stop();
+    }
+
+    response.message = "OK";
+    response.success = true;
+    return true;
+  }
+
 public:
   explicit LaserTracker(ros::NodeHandle &nodeHandle) :
-    nodeHandle_(nodeHandle) {
+    nodeHandle_(nodeHandle), started_(false) {
     std::string laserSubscriberTopic;
     if (!nodeHandle.getParam("laser_scan_topic", laserSubscriberTopic)) {
       ROS_ERROR("Could not find 'laser_scan_topic' parameter");
@@ -102,6 +120,20 @@ public:
                                                                   cmdVelPublisherQueue);
     this->vizPublisher_ = this->nodeHandle_
                               .advertise<visualization_msgs::Marker>("visualization_marker", 0);
+
+    this->startStopService_ = this->nodeHandle_
+                                  .advertiseService("start_stop",
+                                                    &LaserTracker::startStopServiceCallback, this);
+
+    this->start();
+  }
+
+  void start() {
+    this->started_ = true;
+  }
+
+  void stop() {
+    this->started_ = false;
   }
 
   virtual ~LaserTracker() = default;

@@ -81,9 +81,10 @@ include_directories(
 ## Declare cpp executables
 add_executable(${PROJECT_NAME}
         src/${PROJECT_NAME}_node.cpp
-        src/LaserTracker.cpp
         )
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+add_executable(crash
+        src/crash_node.cpp
+        )
 
 ## Add dependencies to exported targets, like ROS msgs or srvs
 #add_dependencies(${PROJECT_NAME}_core
@@ -93,6 +94,9 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 add_dependencies(${PROJECT_NAME}
         ${catkin_EXPORTED_TARGETS}
         )
+add_dependencies(crash
+        ${catkin_EXPORTED_TARGETS}
+        )
 
 ## Specify libraries to link executable targets against
 #target_link_libraries(${PROJECT_NAME}_core
@@ -100,6 +104,10 @@ add_dependencies(${PROJECT_NAME}
 #)
 
 target_link_libraries(${PROJECT_NAME}
+        #${PROJECT_NAME}_core
+        ${catkin_LIBRARIES}
+        )
+target_link_libraries(crash
         #${PROJECT_NAME}_core
         ${catkin_LIBRARIES}
         )
